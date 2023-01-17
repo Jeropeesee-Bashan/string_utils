@@ -21,9 +21,6 @@ for (begin = stripped;\
 #ifdef __cplusplus
 extern "C"
 {
-
-namespace jeropeesee
-{
 #endif /* __cplusplus */
 
 const char * const WHITESPACE_CHARS = "\t\n\v\f\r ";
@@ -464,7 +461,5 @@ char *remove_whitespace_alloc(const char *source)
 #endif /* STRING_UTILS_ALLOC */
 
 #ifdef __cplusplus
-} /* namespace jeropeesee */
-
 }
 #endif /* __cplusplus */
