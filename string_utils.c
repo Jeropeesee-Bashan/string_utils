@@ -23,8 +23,6 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-const char * const WHITESPACE_CHARS = "\t\n\v\f\r ";
-
 char *strpnbrk(const char *string, const char *accept)
 {
     string += strspn(string, accept);

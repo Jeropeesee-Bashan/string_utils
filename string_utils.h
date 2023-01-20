@@ -1,6 +1,8 @@
 #ifndef STRING_UTILS_H_
 #define STRING_UTILS_H_
 
+#define WHITESPACE_CHARS "\t\n\v\f\r "
+
 #include <string.h> /* All the neccessary functions */
 #include <stdlib.h> /* malloc, free, abs */
 
@@ -22,8 +24,6 @@ struct StringSliceList {
     struct Slice *data;
     size_t size;
 };
-
-extern const char * const WHITESPACE_CHARS;
 
 char *strpnbrk(const char *string, const char *accept);
 
