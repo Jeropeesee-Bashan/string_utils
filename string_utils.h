@@ -4,7 +4,8 @@
 #define WHITESPACE_CHARS "\t\n\v\f\r "
 
 #include <string.h> /* All the neccessary functions */
-#include <stdlib.h> /* malloc, free, abs */
+#include <stddef.h> /* size_t, ptrdiff_t */
+#include <stdlib.h> /* malloc, free */
 
 #ifdef __cplusplus
 namespace jeropeesee
@@ -71,14 +72,12 @@ size_t copy_string_n(char *dest,
                      const char *source,
                      size_t size,
                      size_t source_len,
-                     int add_to_size,
-                     int dest_offset);
+                     ptrdiff_t dest_offset);
 
 size_t copy_string(char *dest,
                    const char *source,
                    size_t size,
-                   int add_to_size,
-                   int dest_offset);
+                   ptrdiff_t dest_offset);
 
 size_t join_string_n(char *dest,
                      const struct StringSliceList *list,

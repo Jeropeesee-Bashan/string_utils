@@ -90,7 +90,10 @@ const char *rstrip_string(const char *string)
     return rstrip_string_n(string, string_length(string));
 }
 
-void strip_string_n(const char *string, size_t string_len, const char **begin, const char **end)
+void strip_string_n(const char *string,
+                    size_t string_len,
+                    const char **begin,
+                    const char **end)
 {
     const char *result;
     size_t offset;
@@ -187,38 +190,31 @@ size_t copy_string_n(char *dest,
                      const char *source,
                      size_t size,
                      size_t source_len,
-                     int add_to_size,
-                     int dest_offset)
+                     ptrdiff_t dest_offset)
 {
-    size_t new_size;
+    size_t new_len;
 
     source_len = string_length_n(source, source_len);
-    if (abs(add_to_size) > size && add_to_size < 0)
-        size = 0;
-    else
-        size += add_to_size;
 
     if (size == 0 || dest == NULL) return source_len;
 
-    new_size = (source_len > size - 1) ? size - 1 : source_len;
-    if (new_size > 0) {
-        strncpy(dest + dest_offset, source, new_size);
+    new_len = (source_len > size - 1) ? size - 1 : source_len;
+    if (new_len > 0) {
+        memcpy(dest + dest_offset, source, new_len);
     }
 
-    return new_size;
+    return new_len;
 }
 
 size_t copy_string(char *dest,
                    const char *source,
                    size_t size,
-                   int add_to_size,
-                   int dest_offset)
+                   ptrdiff_t dest_offset)
 {
     return copy_string_n(dest,
                          source,
                          size,
                          string_length(source),
-                         add_to_size,
                          dest_offset);
 }
 
@@ -233,7 +229,13 @@ size_t join_string_n(char *dest,
     size_t i;
     int j;
 
-    if (list->string == NULL || list == NULL) return 0;
+    if (list == NULL ||
+        list->string == NULL ||
+        (dest == NULL && size > 0))
+    {
+        return 0;
+    }
+
     postfix_len = string_length_n(postfix, postfix_len);
     prefix_len = string_length_n(postfix, postfix_len);
     j = 0;
@@ -241,17 +243,16 @@ size_t join_string_n(char *dest,
     for (i = 0; i < list->size; i++) {
         if (prefix != NULL) {
             if (i == 0) continue;
-            j += copy_string_n(dest, prefix, size, prefix_len, -j, j);
+            j += copy_string_n(dest, prefix, size ? size - j : 0, prefix_len, j);
         }
         j += copy_string_n(dest,
                            list->string + list->data[i].begin,
-                           size,
+                           size ? size - j : 0,
                            list->data[i].end - list->data[i].begin,
-                           -j,
                            j);
         if (postfix != NULL) {
             if (i == list->size - 1) continue;
-            j += copy_string_n(dest, postfix, size, postfix_len, -j, j);
+            j += copy_string_n(dest, postfix, size ? size - j : 0, postfix_len, j);
         }
     }
 
@@ -290,7 +291,7 @@ size_t remove_whitespace_n(char *dest,
         i = 0,
         source,
         source_len,
-        i += copy_string_n(dest, begin, size, end - begin, -i, i),
+        i += copy_string_n(dest, begin, size ? size - i : 0, end - begin, i),
         ;
     )
     if (dest != NULL)
@@ -312,8 +313,6 @@ void delete_string_slice_list(struct StringSliceList *list)
     free((void*)list);
 }
 
-#ifdef STRING_UTILS_ALLOC
-
 struct StringSliceList *split_string_n_alloc(const char *string,
                                              size_t string_len,
                                              const char *pattern,
@@ -322,6 +321,7 @@ struct StringSliceList *split_string_n_alloc(const char *string,
     struct StringSliceList *list;
 
     list = (struct StringSliceList *)malloc(sizeof(struct StringSliceList));
+    list->string = string;
     if (list == NULL) return NULL;
     list->string = string;
     list->size = split_string_n(string,
@@ -365,6 +365,7 @@ struct StringSliceList *split_string_whitespace_n_alloc(const char *string,
 
     list = (struct StringSliceList*)malloc(sizeof(struct StringSliceList));
     if (list == NULL) return NULL;
+    list->string = string;
     list->size = split_string_whitespace_n(string, string_len, NULL, 0);
     if (list->size == 0) {
         free((void*)list);
@@ -390,10 +391,10 @@ char *copy_string_alloc(const char *source, size_t source_len)
     char *new_string;
     size_t new_string_len;
 
-    new_string_len = copy_string_n(NULL, source, 0, source_len, 0, 0);
+    new_string_len = copy_string_n(NULL, source, 0, source_len, 0);
     new_string = (char*)malloc(new_string_len + 1);
     if (new_string == NULL) return NULL;
-    copy_string_n(new_string, source, new_string_len + 1, source_len, 0, 0);
+    copy_string_n(new_string, source, new_string_len + 1, source_len, 0);
     new_string[new_string_len] = '\0';
 
     return new_string;
@@ -455,8 +456,6 @@ char *remove_whitespace_alloc(const char *source)
 {
     return remove_whitespace_n_alloc(source, string_length(source));
 }
-
-#endif /* STRING_UTILS_ALLOC */
 
 #ifdef __cplusplus
 }
