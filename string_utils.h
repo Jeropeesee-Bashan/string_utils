@@ -8,9 +8,6 @@
 #include <stdlib.h> /* malloc, free */
 
 #ifdef __cplusplus
-namespace jeropeesee
-{
-
 extern "C"
 {
 #endif /* __cplusplus */
@@ -140,8 +137,6 @@ void delete_string_slice_list(struct StringSliceList *list);
 #endif /* STRING_UTILS_ALLOC */
 
 #ifdef __cplusplus
-} /* namespace jeropeesee */
-
 }
 #endif /* __cplusplus */
 
