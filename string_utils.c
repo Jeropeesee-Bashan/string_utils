@@ -199,9 +199,8 @@ size_t copy_string_n(char *dest,
     if (size == 0 || dest == NULL) return source_len;
 
     new_len = (source_len > size - 1) ? size - 1 : source_len;
-    if (new_len > 0) {
+    if (new_len > 0)
         memcpy(dest + dest_offset, source, new_len);
-    }
 
     return new_len;
 }
@@ -386,18 +385,23 @@ struct StringSliceList *split_string_whitespace_alloc(const char *string)
     return split_string_whitespace_n_alloc(string, string_length(string));
 }
 
-char *copy_string_alloc(const char *source, size_t source_len)
+char *copy_string_alloc_n(const char *source, size_t source_len)
 {
     char *new_string;
     size_t new_string_len;
 
-    new_string_len = copy_string_n(NULL, source, 0, source_len, 0);
+    new_string_len = string_length_n(source, source_len);
     new_string = (char*)malloc(new_string_len + 1);
     if (new_string == NULL) return NULL;
-    copy_string_n(new_string, source, new_string_len + 1, source_len, 0);
+    memcpy(new_string, source, new_string_len);
     new_string[new_string_len] = '\0';
 
     return new_string;
+}
+
+char *copy_string_alloc(const char *source)
+{
+    return copy_string_alloc_n(source, string_length(source));
 }
 
 char *join_string_n_alloc(const struct StringSliceList *list,

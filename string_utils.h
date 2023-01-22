@@ -117,7 +117,9 @@ struct StringSliceList *split_string_whitespace_n_alloc(const char *string,
 
 struct StringSliceList *split_string_whitespace_alloc(const char *string);
 
-char *copy_string_alloc(const char *source, size_t source_len);
+char *copy_string_alloc_n(const char *source, size_t source_len);
+
+char *copy_string_alloc(const char *source);
 
 char *join_string_n_alloc(const struct StringSliceList *list,
                           const char *postfix,
