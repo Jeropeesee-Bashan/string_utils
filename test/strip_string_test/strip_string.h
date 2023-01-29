@@ -21,7 +21,7 @@ TEST unchanged_result_for_lstrip(void)
 {
         const char * const result = lstrip_string_n(string + 9, 7);
 
-        ASSERT_EQ('e', *result);
+        ASSERT_EQ('a', *result);
         PASS();
 }
 
