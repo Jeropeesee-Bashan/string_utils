@@ -218,7 +218,7 @@ size_t copy_string(char *dest,
 }
 
 size_t join_string_n(char *dest,
-                     const struct StringSliceList *list,
+                     const struct Slices *list,
                      size_t size,
                      const char *postfix,
                      size_t postfix_len,
@@ -229,7 +229,7 @@ size_t join_string_n(char *dest,
     int j;
 
     if (list == NULL ||
-        list->string == NULL ||
+        list->origin == NULL ||
         (dest == NULL && size > 0))
     {
         return 0;
@@ -245,7 +245,7 @@ size_t join_string_n(char *dest,
             j += copy_string_n(dest, prefix, size ? size - j : 0, prefix_len, j);
         }
         j += copy_string_n(dest,
-                           list->string + list->data[i].begin,
+                           list->origin + list->data[i].begin,
                            size ? size - j : 0,
                            list->data[i].end - list->data[i].begin,
                            j);
@@ -262,7 +262,7 @@ size_t join_string_n(char *dest,
 }
 
 size_t join_string(char *dest,
-                   const struct StringSliceList *list,
+                   const struct Slices *list,
                    size_t size,
                    const char *postfix,
                    const char *prefix)
@@ -306,23 +306,23 @@ size_t remove_whitespace(char *dest,
     return remove_whitespace_n(dest, source, size, string_length(source));
 }
 
-void delete_string_slice_list(struct StringSliceList *list)
+void delete_string_slice_list(struct Slices *list)
 {
     free((void*)list->data);
     free((void*)list);
 }
 
-struct StringSliceList *split_string_n_alloc(const char *string,
-                                             size_t string_len,
-                                             const char *pattern,
-                                             size_t pattern_len)
+struct Slices *split_string_n_alloc(const char *string,
+                                    size_t string_len,
+                                    const char *pattern,
+                                    size_t pattern_len)
 {
-    struct StringSliceList *list;
+    struct Slices *list;
 
-    list = (struct StringSliceList *)malloc(sizeof(struct StringSliceList));
-    list->string = string;
+    list = (struct Slices *)malloc(sizeof(struct Slices));
+    list->origin = string;
     if (list == NULL) return NULL;
-    list->string = string;
+    list->origin = string;
     list->size = split_string_n(string,
                                 string_len,
                                 pattern,
@@ -348,8 +348,8 @@ struct StringSliceList *split_string_n_alloc(const char *string,
     return list;
 }
 
-struct StringSliceList *split_string_alloc(const char *string,
-                                           const char *pattern)
+struct Slices *split_string_alloc(const char *string,
+                                  const char *pattern)
 {
     return split_string_n_alloc(string,
                                 string_length(string),
@@ -357,14 +357,14 @@ struct StringSliceList *split_string_alloc(const char *string,
                                 string_length(pattern));
 }
 
-struct StringSliceList *split_string_whitespace_n_alloc(const char *string,
-                                                        size_t string_len)
+struct Slices *split_string_whitespace_n_alloc(const char *string,
+                                               size_t string_len)
 {
-    struct StringSliceList *list;
+    struct Slices *list;
 
-    list = (struct StringSliceList*)malloc(sizeof(struct StringSliceList));
+    list = (struct Slices*)malloc(sizeof(struct Slices));
     if (list == NULL) return NULL;
-    list->string = string;
+    list->origin = string;
     list->size = split_string_whitespace_n(string, string_len, NULL, 0);
     if (list->size == 0) {
         free((void*)list);
@@ -380,7 +380,7 @@ struct StringSliceList *split_string_whitespace_n_alloc(const char *string,
     return list;
 }
 
-struct StringSliceList *split_string_whitespace_alloc(const char *string)
+struct Slices *split_string_whitespace_alloc(const char *string)
 {
     return split_string_whitespace_n_alloc(string, string_length(string));
 }
@@ -404,7 +404,7 @@ char *copy_string_alloc(const char *source)
     return copy_string_n_alloc(source, string_length(source));
 }
 
-char *join_string_n_alloc(const struct StringSliceList *list,
+char *join_string_n_alloc(const struct Slices *list,
                           const char *postfix,
                           size_t postfix_len,
                           const char *prefix,
@@ -432,7 +432,7 @@ char *join_string_n_alloc(const struct StringSliceList *list,
     return new_string;
 }
 
-char *join_string_alloc(const struct StringSliceList *list,
+char *join_string_alloc(const struct Slices *list,
                         const char *postfix,
                         const char *prefix)
 {
