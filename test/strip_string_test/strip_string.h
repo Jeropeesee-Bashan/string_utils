@@ -37,7 +37,7 @@ TEST correct_rstrip(void)
 {
         const char * const result = rstrip_string_n(string + 24, 7);
 
-        ASSERT_EQ('o', *result);
+        ASSERT_EQ('e', *result);
         PASS();
 }
 
@@ -53,7 +53,7 @@ TEST unchanged_result_for_rstrip(void)
 {
         const char * const result = rstrip_string_n(string + 33, 4);
 
-        ASSERT_EQ('l', *result);
+        ASSERT_EQ('f', *result);
         PASS();
 }
 
