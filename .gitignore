@@ -1,0 +1,3 @@
+*.o
+test/greatest/
+test/test
