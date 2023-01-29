@@ -3,7 +3,7 @@ static const char string[] = "    \v\n\n  a   hello\r\n   \nasdase\ts\ndasf     
 TEST correct_lstrip(void)
 {
         const char * const result = lstrip_string_n(string + 10,
-                                                    sizeof(string) - 1) - 10;
+                                                    sizeof(string) - 11);
 
         ASSERT_EQ('h', *result);        
         PASS();
