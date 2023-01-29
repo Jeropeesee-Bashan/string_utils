@@ -385,7 +385,7 @@ struct StringSliceList *split_string_whitespace_alloc(const char *string)
     return split_string_whitespace_n_alloc(string, string_length(string));
 }
 
-char *copy_string_alloc_n(const char *source, size_t source_len)
+char *copy_string_n_alloc(const char *source, size_t source_len)
 {
     char *new_string;
     size_t new_string_len;
@@ -401,7 +401,7 @@ char *copy_string_alloc_n(const char *source, size_t source_len)
 
 char *copy_string_alloc(const char *source)
 {
-    return copy_string_alloc_n(source, string_length(source));
+    return copy_string_n_alloc(source, string_length(source));
 }
 
 char *join_string_n_alloc(const struct StringSliceList *list,
