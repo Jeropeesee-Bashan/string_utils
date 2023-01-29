@@ -70,13 +70,10 @@ const char *lstrip_string_n(const char *string, size_t max_string_len)
     if (string == NULL) return NULL;
 
     max_string_len = string_length_n(string, max_string_len);
-    begin = string;
 
-    string = strpnbrk(string, WHITESPACE_CHARS);
-    if (string == NULL) return NULL;
-    if (max_string_len > (size_t)(string - begin))
-        begin = string;
-    else
+    begin = strpnbrk(string, WHITESPACE_CHARS);
+    if (begin == NULL) return NULL;
+    if (begin > string + max_string_len)
         begin = NULL;
 
     return begin;
