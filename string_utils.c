@@ -86,18 +86,22 @@ const char *lstrip_string(const char *string)
 
 const char *rstrip_string_n(const char *string, size_t max_string_len)
 {
-    const char *end_;
+    const char *begin, *end;
 
     if (string == NULL) return NULL;
 
     max_string_len = string_length_n(string, max_string_len);
 
-    NON_WHITESPACE_LOOP(
-        end_ = NULL, string, max_string_len, end_ = end,
-        ;
-    )
+    for (begin = lstrip_string_n(string, max_string_len), end = begin;
+         begin != NULL && begin < string + max_string_len;
+         begin = strpnbrk(end, WHITESPACE_CHARS))
+    {
+        end = strpbrk(string, WHITESPACE_CHARS);
+        if (end == NULL)
+            end = string + max_string_len;
+    }
 
-    return end_;
+    return end;
 }
 
 const char *rstrip_string(const char *string)
