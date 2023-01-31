@@ -16,6 +16,18 @@ TEST correct_split(void)
         PASS();
 }
 
+TEST correct_list_size_for_null_list(void)
+{
+        const char to_split[] = "This|is|a|long|line|we|are|going|to|split";
+        size_t actual_size;
+
+        actual_size = split_string_n(to_split, sizeof(to_split) - 1,
+                                     "|", 1, NULL, 0);
+
+        ASSERT_EQ(actual_size, 10);
+        PASS();
+}
+
 TEST correct_split_beginning_separator(void)
 {
         const char to_split[] = "_one_two_three";
@@ -101,6 +113,7 @@ TEST correct_split_multiple_single_char_separator(void)
 }
 
 SUITE(split_string_test) {
+        RUN_TEST(correct_list_size_for_null_list);
         RUN_TEST(correct_split);
         RUN_TEST(correct_split_beginning_separator);
         RUN_TEST(correct_split_ending_separator);
