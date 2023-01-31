@@ -16,7 +16,7 @@ TEST correct_split(void)
         PASS();
 }
 
-TEST correct_list_size_for_null_list(void)
+TEST correct_list_size_for_null_list_for_split(void)
 {
         const char to_split[] = "This|is|a|long|line|we|are|going|to|split";
         size_t actual_size;
@@ -113,7 +113,7 @@ TEST correct_split_multiple_single_char_separator(void)
 }
 
 SUITE(split_string_test) {
-        RUN_TEST(correct_list_size_for_null_list);
+        RUN_TEST(correct_list_size_for_null_list_for_split);
         RUN_TEST(correct_split);
         RUN_TEST(correct_split_beginning_separator);
         RUN_TEST(correct_split_ending_separator);
