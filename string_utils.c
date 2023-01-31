@@ -183,14 +183,23 @@ size_t split_string_whitespace_n(const char *string,
                                  size_t list_size)
 {
     size_t i;
+    const char *begin, *end;
 
-    NON_WHITESPACE_LOOP(
-        (i = 0), string, string_len, i++,
+    string_len = string_length_n(string, string_len);
+
+    for (i = 0, begin = lstrip_string_n(string, string_len);
+         begin != NULL && begin <= string + string_len;
+         i++, begin = strpnbrk(end, WHITESPACE_CHARS))
+    {
+        end = strpbrk(begin, WHITESPACE_CHARS);
+        if (end == NULL) {
+            end = string + string_len;
+        }
         if (list == NULL) continue;
+        if (list_size == i) break;
         list[i].begin = begin - string;
         list[i].end = end - string;
-        if (list_size == i + 1) break;
-    )
+    }
 
     return i;
 }
