@@ -149,16 +149,16 @@ size_t split_string_n(const char *string,
     if (pattern_len == 0) return 0;
 
     for (begin = string, end = NULL, i = 0;
-         end != string + string_len;
+         begin <= string + string_len;
          begin = end + pattern_len, i++)
     {
         end = strstr(begin, pattern);
         if (end == NULL)
             end = string + string_len;
         if (list == NULL) continue;
+        if (list_size == i) break;
         list[i].begin = begin - string;
         list[i].end = end - string;
-        if (list_size == i + 1) break;
     }
 
     return i;
