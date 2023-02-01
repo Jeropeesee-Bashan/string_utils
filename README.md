@@ -1,4 +1,4 @@
-# string_utils — Yet another strings library for C!
+# string_utils: Yet another strings library for C!
 
 This is a simple C library for working with strings.
 
