@@ -18,475 +18,495 @@
 
 #include "string_utils.h"
 
-#define NON_WHITESPACE_LOOP(init_vars, string, string_len, iter_vars, body)\
-{\
-const char *begin, *end, *stripped;\
-init_vars;\
-string_len = string_length_n(string, string_len);\
-stripped = lstrip_string_n(string, string_len);\
-for (begin = stripped;\
-     begin != NULL;\
-     (iter_vars), begin = strpnbrk(end, WHITESPACE_CHARS))\
-{\
-    end = strpbrk(begin, WHITESPACE_CHARS);\
-    if (end == NULL) {\
-        end = string + string_len;\
-    }\
-    body\
-}\
-}
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif /* __cplusplus */
 
-char *strpnbrk(const char *string, const char *accept)
+char *next_line(struct str_slice *line)
 {
-    string += strspn(string, accept);
-    return *string ? (char*)string : NULL;
-}
-
-size_t string_length_n(const char *string, size_t max_length)
-{
-    const char *null_char;
-
-    if (string == NULL) return 0;
-
-    null_char = (char*)memchr((void*)string, '\0', max_length + 1);
-    if (null_char == NULL) return max_length;
-    return null_char - string;
-}
-
-size_t string_length(const char *string)
-{
-    return string ? strlen(string) : 0;
-}
-
-const char *lstrip_string_n(const char *string, size_t max_string_len)
-{
-    const char *begin;
-
-    if (string == NULL) return NULL;
-
-    max_string_len = string_length_n(string, max_string_len);
-
-    begin = strpnbrk(string, WHITESPACE_CHARS);
-    if (begin == NULL) return NULL;
-    if (begin > string + max_string_len)
-        begin = NULL;
-
-    return begin;
-}
-
-const char *lstrip_string(const char *string)
-{
-    return lstrip_string_n(string, string_length(string));
-}
-
-const char *rstrip_string_n(const char *string, size_t max_string_len)
-{
-    const char *begin, *end;
-
-    if (string == NULL) return NULL;
-
-    max_string_len = string_length_n(string, max_string_len);
-
-    for (begin = lstrip_string_n(string, max_string_len), end = begin;
-         begin != NULL && begin < string + max_string_len;
-         begin = strpnbrk(end, WHITESPACE_CHARS))
-    {
-        end = strpbrk(string, WHITESPACE_CHARS);
-        if (end == NULL)
-            end = string + max_string_len;
-    }
-
-    return end;
-}
-
-const char *rstrip_string(const char *string)
-{
-    return rstrip_string_n(string, string_length(string));
-}
-
-void strip_string_n(const char *string,
-                    size_t string_len,
-                    const char **begin,
-                    const char **end)
-{
-    const char *result;
-    size_t offset;
-
-    result = lstrip_string_n(string, string_len);
-    offset = result - string;
-    result = rstrip_string_n(string + offset, string_len - offset);
-
-    if (begin != NULL)
-        *begin = string + offset;
-    if (end != NULL)
-        *end = result;
-}
-
-void strip_string(const char *string, const char **begin, const char **end)
-{
-    strip_string_n(string, string_length(string), begin, end);
-}
-
-size_t split_string_n(const char *string,
-                      size_t string_len,
-                      const char *pattern,
-                      size_t pattern_len,
-                      struct Slice *list,
-                      size_t list_size)
-{
-    const char *begin;
     const char *end;
-    size_t i;
 
-    string_len = string_length_n(string, string_len);
-    pattern_len = string_length_n(string, pattern_len);
+    if (line == NULL)
+        return NULL;
 
-    if (pattern_len == 0) return 0;
+    line->begin += line->size + 1;
+    end = strchr(line->begin, '\n');
+    line->size = end ? (size_t)(end - line->begin) : strlen(line->begin);
 
-    for (begin = string, end = NULL, i = 0;
-         begin <= string + string_len;
-         begin = end + pattern_len, i++)
-    {
-        end = strstr(begin, pattern);
-        if (end == NULL)
-            end = string + string_len;
-        if (list == NULL) continue;
-        if (list_size == i) break;
-        list[i].begin = begin - string;
-        list[i].end = end - string;
+    return line->begin;
+}
+
+char *lstrip_string_n(struct str_slice *str)
+{
+    size_t delta;
+
+    if (str == NULL)
+        return NULL;
+
+    delta = strspn(str->begin, WHITESPACE_CHARS);
+    if (delta > str->size) {
+        str->begin += str->size;
+        str->size = 0;
+    } else {
+        str->begin += delta;
+        str->size -= delta;
     }
 
-    return i;
+    return str->begin;
 }
 
-size_t split_string(const char *string,
-                    const char *pattern,
-                    struct Slice *list,
-                    size_t list_size)
+char *lstrip_string(const char *str, size_t *size)
 {
-    return split_string_n(string,
-                          string_length(string),
-                          pattern,
-                          string_length(pattern),
-                          list,
-                          list_size);
+    struct str_slice slice;
+    char *result;
+
+    if (str == NULL)
+        return NULL;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    result = lstrip_string_n(&slice);
+    if (size)
+        *size = slice.size;
+    return result;
 }
 
-size_t split_string_whitespace_n(const char *string,
-                                 size_t string_len,
-                                 struct Slice *list,
-                                 size_t list_size)
+size_t rstrip_string_n(const struct str_slice *str)
 {
-    size_t i;
-    const char *begin, *end;
+    size_t size;
 
-    string_len = string_length_n(string, string_len);
-
-    for (i = 0, begin = lstrip_string_n(string, string_len);
-         begin != NULL && begin <= string + string_len;
-         i++, begin = strpnbrk(end, WHITESPACE_CHARS))
-    {
-        end = strpbrk(begin, WHITESPACE_CHARS);
-        if (end == NULL) {
-            end = string + string_len;
-        }
-        if (list == NULL) continue;
-        if (list_size == i) break;
-        list[i].begin = begin - string;
-        list[i].end = end - string;
-    }
-
-    return i;
-}
-
-size_t split_string_whitespace(const char *string,
-                               struct Slice *list,
-                               size_t list_size)
-{
-    return split_string_whitespace_n(string,
-                                     string_length(string),
-                                     list,
-                                     list_size);
-}
-
-size_t copy_string_n(char *dest,
-                     const char *source,
-                     size_t size,
-                     size_t source_len,
-                     ptrdiff_t dest_offset)
-{
-    size_t new_len;
-
-    source_len = string_length_n(source, source_len);
-
-    if (size == 0 || dest == NULL) return source_len;
-
-    new_len = (source_len > size - 1) ? size - 1 : source_len;
-    if (new_len > 0)
-        memcpy(dest + dest_offset, source, new_len);
-
-    return new_len;
-}
-
-size_t copy_string(char *dest,
-                   const char *source,
-                   size_t size,
-                   ptrdiff_t dest_offset)
-{
-    return copy_string_n(dest,
-                         source,
-                         size,
-                         string_length(source),
-                         dest_offset);
-}
-
-size_t join_string_n(char *dest,
-                     const struct Slices *list,
-                     size_t size,
-                     const char *postfix,
-                     size_t postfix_len,
-                     const char *prefix,
-                     size_t prefix_len)
-{
-    size_t i;
-    int j;
-
-    if (list == NULL ||
-        list->origin == NULL ||
-        (dest == NULL && size > 0))
-    {
+    if (str == NULL)
         return 0;
-    }
 
-    postfix_len = string_length_n(postfix, postfix_len);
-    prefix_len = string_length_n(postfix, postfix_len);
-    j = 0;
+    size = str->size;
+    while (size && isspace(str->begin[size - 1]))
+        size -= 1;
 
-    for (i = 0; i < list->size; i++) {
-        if (prefix != NULL) {
-            if (i == 0) continue;
-            j += copy_string_n(dest, prefix, size ? size - j : 0, prefix_len, j);
+    return size;
+}
+
+size_t rstrip_string(const char *str)
+{
+    struct str_slice slice;
+
+    if (str == NULL)
+        return 0;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    return rstrip_string_n(&slice);
+}
+
+char *strip_string_n(struct str_slice *str)
+{
+    if (str == NULL)
+        return NULL;
+
+    str->begin = lstrip_string_n(str);
+    str->size = rstrip_string_n(str);
+
+    return str->begin;
+}
+
+char *strip_string(const char *str, size_t *size)
+{
+    struct str_slice slice;
+    char *result;
+
+    if (str == NULL || size == NULL)
+        return NULL;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    result = strip_string_n(&slice);
+    *size = slice.size;
+    return result;
+}
+
+size_t split_string_n(const struct str_slice *str,
+                      const char *pattern,
+                      struct str_slice *list,
+                      size_t list_max_size)
+{
+    struct str_slice str_;
+    const char *l, *r;
+    size_t pattern_len, count, spn;
+    unsigned char end;
+
+    if (str == NULL)
+        return 0;
+
+    if (pattern)
+        pattern_len = strlen(pattern);
+
+    memcpy((void*)&str_, (const void*)str, sizeof(struct str_slice));
+
+    l = pattern ? str_.begin : strip_string_n(&str_);
+
+    if (str_.size == 0)
+        return 0;
+
+    end = 0;
+    count = 0;
+    while (!end) {
+        r = pattern ? strstr(l, pattern) : strpbrk(l, WHITESPACE_CHARS);
+
+        if (r)
+            spn = pattern ? pattern_len : strspn(r, WHITESPACE_CHARS);
+
+        if (r && r + spn > str_.begin + str_.size) {
+            r = pattern ? str_.begin + str_.size : r;
+            end = 1;
         }
-        j += copy_string_n(dest,
-                           list->origin + list->data[i].begin,
-                           size ? size - j : 0,
-                           list->data[i].end - list->data[i].begin,
-                           j);
-        if (postfix != NULL) {
-            if (i == list->size - 1) continue;
-            j += copy_string_n(dest, postfix, size ? size - j : 0, postfix_len, j);
+
+        if (!r) {
+            r = str_.begin + str_.size;
+            end = 1;
         }
+
+        if (list && count < list_max_size) {
+            list[count].begin = (char*)l;
+            list[count].size = r - l;
+        }
+
+        if (r && !end)
+            l = r + spn;
+
+        count += 1;
     }
 
-    if (dest != NULL)
-        dest[j] = '\0';
-
-    return j;
+    return count;
 }
 
-size_t join_string(char *dest,
-                   const struct Slices *list,
-                   size_t size,
-                   const char *postfix,
-                   const char *prefix)
+size_t split_string(const char *str,
+                    const char *pattern,
+                    struct str_slice *list,
+                    size_t list_max_size)
 {
-    return join_string_n(dest,
-                         list,
-                         size,
-                         postfix,
-                         string_length(postfix),
-                         prefix,
-                         string_length(prefix));
+    struct str_slice slice;
+
+    if (str == NULL)
+        return 0;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    return split_string_n(&slice, pattern, list, list_max_size);
 }
 
-size_t remove_whitespace_n(char *dest,
-                           const char *source,
-                           size_t size,
-                           size_t source_len)
+size_t copy_string_n(char *dst,
+                     const struct str_slice *src,
+                     size_t dst_size,
+                     ptrdiff_t offset)
 {
-    size_t i;
+    struct str_slice src_;
 
-    if (source_len > size - 1)
-        source_len = size - 1;
+    if (src == NULL || (dst && dst_size == 0))
+        return 0;
 
-    NON_WHITESPACE_LOOP(
-        i = 0,
-        source,
-        source_len,
-        i += copy_string_n(dest, begin, size ? size - i : 0, end - begin, i),
-        ;
-    )
-    if (dest != NULL)
-        dest[i] = '\0';
+    memcpy((void*)&src_, (const void*)src, sizeof(struct str_slice));
 
-    return i;
+    if (offset + src_.size > dst_size - 1)
+        src_.size = dst_size - offset - 1;
+
+    if (dst)
+        strncpy(dst + offset, src_.begin, src_.size);
+
+    return src_.size;
 }
 
-size_t remove_whitespace(char *dest,
-                         const char *source,
-                         size_t size)
+size_t copy_string(char *dst,
+                   const char *src,
+                   size_t dst_size,
+                   ptrdiff_t offset)
 {
-    return remove_whitespace_n(dest, source, size, string_length(source));
+    struct str_slice slice;
+
+    if (src == NULL)
+        return 0;
+
+    slice.begin = (char*)src;
+    slice.size = strlen(src);
+
+    return copy_string_n(dst, &slice, dst_size, offset);
 }
 
-void delete_string_slice_list(struct Slices *list)
-{
-    free((void*)list->data);
-    free((void*)list);
-}
-
-struct Slices *split_string_n_alloc(const char *string,
-                                    size_t string_len,
-                                    const char *pattern,
-                                    size_t pattern_len)
-{
-    struct Slices *list;
-
-    list = (struct Slices *)malloc(sizeof(struct Slices));
-    list->origin = string;
-    if (list == NULL) return NULL;
-    list->origin = string;
-    list->size = split_string_n(string,
-                                string_len,
-                                pattern,
-                                pattern_len,
-                                NULL,
-                                0);
-    if (list->size == 0) {
-        free((void*)list);
-        return NULL;
-    }
-    list->data = (struct Slice*)malloc(list->size * sizeof(struct Slice));
-    if (list->data == NULL) {
-        delete_string_slice_list(list);
-        return NULL;
-    }
-
-    split_string_n(string,
-                   string_len,
-                   pattern,
-                   pattern_len,
-                   list->data,
-                   list->size);
-    return list;
-}
-
-struct Slices *split_string_alloc(const char *string,
-                                  const char *pattern)
-{
-    return split_string_n_alloc(string,
-                                string_length(string),
-                                pattern,
-                                string_length(pattern));
-}
-
-struct Slices *split_string_whitespace_n_alloc(const char *string,
-                                               size_t string_len)
-{
-    struct Slices *list;
-
-    list = (struct Slices*)malloc(sizeof(struct Slices));
-    if (list == NULL) return NULL;
-    list->origin = string;
-    list->size = split_string_whitespace_n(string, string_len, NULL, 0);
-    if (list->size == 0) {
-        free((void*)list);
-        return NULL;
-    }
-
-    list->data = (struct Slice*)malloc(list->size * sizeof(struct Slice));
-    if (list->data == NULL) {
-        delete_string_slice_list(list);
-        return NULL;
-    }
-    split_string_whitespace_n(string, string_len, list->data, list->size);
-    return list;
-}
-
-struct Slices *split_string_whitespace_alloc(const char *string)
-{
-    return split_string_whitespace_n_alloc(string, string_length(string));
-}
-
-char *copy_string_n_alloc(const char *source, size_t source_len)
-{
-    char *new_string;
-    size_t new_string_len;
-
-    new_string_len = string_length_n(source, source_len);
-    new_string = (char*)malloc(new_string_len + 1);
-    if (new_string == NULL) return NULL;
-    memcpy(new_string, source, new_string_len);
-    new_string[new_string_len] = '\0';
-
-    return new_string;
-}
-
-char *copy_string_alloc(const char *source)
-{
-    return copy_string_n_alloc(source, string_length(source));
-}
-
-char *join_string_n_alloc(const struct Slices *list,
-                          const char *postfix,
-                          size_t postfix_len,
-                          const char *prefix,
-                          size_t prefix_len)
-{
-    char *new_string;
-    size_t new_string_len;
-
-    new_string_len = join_string_n(NULL,
-                                   list,
-                                   0,
-                                   postfix,
-                                   postfix_len,
-                                   prefix,
-                                   prefix_len);
-    new_string = (char*)malloc(new_string_len + 1);
-    if (new_string == NULL) return NULL;
-    join_string_n(new_string,
-                  list,
-                  new_string_len + 1,
-                  postfix,
-                  postfix_len,
-                  prefix,
-                  prefix_len);
-    return new_string;
-}
-
-char *join_string_alloc(const struct Slices *list,
+char *join_string_pre_p(char *dst,
+                        size_t dst_size,
+                        const struct str_slice *list,
+                        size_t list_size,
+                        const char *prefix,
                         const char *postfix,
-                        const char *prefix)
+                        size_t *len)
 {
-    return join_string_n_alloc(list,
-                               postfix,
-                               string_length(postfix),
-                               prefix,
-                               string_length(prefix));
+    struct str_slice prefix_, postfix_;
+    char *ptr;
+    size_t i;
+    ptrdiff_t offset;
+
+    if (list == NULL)
+        return NULL;
+
+    if (prefix) {
+        prefix_.begin = (char*)prefix;
+        prefix_.size = strlen(prefix);
+    }
+    if (postfix) {
+        postfix_.begin = (char*)postfix;
+        postfix_.size = strlen(postfix);
+    }
+
+    for (ptr = dst, i = 0; i < list_size; i++) {
+        offset = ptr - dst;
+        if (prefix && i > 0)
+            ptr += copy_string_n(dst, &prefix_, dst_size, offset);
+        ptr += copy_string_n(dst, list + i, dst_size, offset);
+        if (postfix && i < list_size - 1)
+            ptr += copy_string_n(dst, &postfix_, dst_size, offset);
+    }
+
+    *ptr = '\0';
+    if (len)
+        *len = ptr - dst;
+    return dst;
 }
 
-char *remove_whitespace_n_alloc(const char *source, size_t source_len)
+char *join_string_pre(char *dst,
+                      size_t dst_size,
+                      const struct str_slice *list,
+                      size_t list_size,
+                      const char *prefix,
+                      size_t *len)
 {
-    char *new_string;
-    size_t new_string_len;
-
-    new_string_len = remove_whitespace_n(NULL, source, 0, source_len);
-    new_string = (char*)malloc(new_string_len + 1);
-    if (new_string == NULL) return NULL;
-    remove_whitespace_n(new_string, source, new_string_len + 1, source_len);
-
-    return new_string;
+    return join_string_pre_p(dst, dst_size, list, list_size, prefix, NULL, len);
 }
 
-char *remove_whitespace_alloc(const char *source)
+char *join_string_p(char *dst,
+                    size_t dst_size,
+                    const struct str_slice *list,
+                    size_t list_size,
+                    const char *postfx,
+                    size_t *len)
 {
-    return remove_whitespace_n_alloc(source, string_length(source));
+    return join_string_pre_p(dst, dst_size, list, list_size, NULL, postfx, len);
+}
+
+char* join_string(char *dst,
+                  size_t dst_size,
+                  const struct str_slice *list,
+                  size_t list_size,
+                  size_t *len)
+{
+    return join_string_pre_p(dst, dst_size, list, list_size, NULL, NULL, len);
+}
+
+char *remove_whitespace_n(char *dst,
+                          const struct str_slice *src,
+                          size_t dst_size,
+                          size_t *len)
+{
+    struct str_slice src_, part;
+    const char *l, *r;
+    size_t spn, idx;
+    unsigned char end;
+
+    if (src == NULL)
+        return NULL;
+
+    memcpy((void*)&src_, (const void*)src, sizeof(struct str_slice));
+
+    idx = 0;
+    end = 0;
+    l = strip_string_n(&src_);
+    while (!end) {
+        r = strpbrk(l, WHITESPACE_CHARS);
+
+        if (r)
+            spn = strspn(r, WHITESPACE_CHARS);
+
+        if (r && r + spn > src_.begin + src_.size)
+            end = 1;
+
+        if (!r) {
+            r = src_.begin + src_.size;
+            end = 1;
+        }
+
+        part.begin = (char*)l;
+        part.size = r - l;
+        idx += copy_string_n(dst, &part, dst_size, idx);
+
+        if (r && !end)
+            l = r + spn;
+    }
+
+    dst[idx] = '\0';
+
+    if (len)
+        *len = idx;
+    return dst;
+}
+
+char *remove_whitespace(char *dst,
+                        const char *src,
+                        size_t dst_size,
+                        size_t *len)
+{
+    struct str_slice slice;
+
+    if (src == NULL)
+        return NULL;
+
+    slice.begin = (char*)src;
+    slice.size = strlen(src);
+
+    return remove_whitespace_n(dst, &slice, dst_size, len);
+}
+
+struct str_slice *split_string_n_alloc(const struct str_slice *str,
+                                       const char *pattern,
+                                       size_t *size)
+{
+    struct str_slice *result;
+    size_t size_;
+
+    if (str == NULL || size == NULL)
+        return NULL;
+
+    size_ = split_string_n(str, pattern, NULL, 0);
+    if (size_ == 0)
+        return NULL;
+
+    result = (struct str_slice*)malloc(size_ * sizeof(struct str_slice));
+    if (result == NULL)
+        return NULL;
+
+    *size = split_string_n(str, pattern, result, size_);
+    return result;
+}
+
+struct str_slice *split_string_alloc(const char *str,
+                                     const char *pattern,
+                                     size_t *size)
+{
+    struct str_slice slice;
+
+    if (str == NULL)
+        return NULL;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    return split_string_n_alloc(&slice, pattern, size);
+}
+
+char *join_string_pre_p_alloc(const struct str_slice *list,
+                               size_t list_size,
+                               const char *pre,
+                               const char *post)
+{
+    char *result;
+    size_t len;
+
+    if (list == NULL)
+        return NULL;
+
+    join_string_pre_p(NULL, 0, list, list_size, pre, post, &len);
+    result = (char*)malloc(len + 1);
+    if (result == NULL)
+        return NULL;
+
+    return join_string_pre_p(result, len + 1, list, list_size, pre, post, NULL);
+}
+
+char *join_string_pre_alloc(const struct str_slice *list,
+                            size_t list_size,
+                            const char *prefix)
+{
+    return join_string_pre_p_alloc(list, list_size, prefix, NULL);
+}
+
+char *join_string_p_alloc(const struct str_slice *list,
+                           size_t list_size,
+                           const char *postfix)
+{
+    return join_string_pre_p_alloc(list, list_size, NULL, postfix);
+}
+
+char *join_string_alloc(const struct str_slice *list, size_t list_size)
+{
+    return join_string_pre_p_alloc(list, list_size, NULL, NULL);
+}
+
+char *remove_whitespace_n_alloc(const struct str_slice *src)
+{
+    char *result;
+    size_t len;
+
+    if (src == NULL)
+        return NULL;
+
+    remove_whitespace_n(NULL, src, 0, &len);
+
+    result = (char*)malloc(len + 1);
+    if (result == NULL)
+        return NULL;
+
+    return remove_whitespace_n(result, src, len + 1, NULL);
+}
+
+char *remove_whitespace_alloc(const char *src)
+{
+    struct str_slice slice;
+
+    if (src == NULL)
+        return NULL;
+
+    slice.begin = (char*)src;
+    slice.size = strlen(src);
+
+    return remove_whitespace_n_alloc(&slice);
+}
+
+char *copy_string_n_alloc(const struct str_slice *str)
+{
+    char *result;
+    size_t len;
+
+    if (str == NULL)
+        return NULL;
+
+    len = copy_string_n(NULL, str, 0, 0);
+    result = (char*)malloc(len + 1);
+    if (result == NULL)
+        return NULL;
+
+    copy_string_n(result, str, len + 1, 0);
+    result[len] = '\0';
+
+    return result;
+}
+
+char *copy_string_alloc(const char *str)
+{
+    struct str_slice slice;
+
+    if (str == NULL)
+        return NULL;
+
+    slice.begin = (char*)str;
+    slice.size = strlen(str);
+
+    return copy_string_n_alloc(&slice);
 }
 
 #ifdef __cplusplus
