@@ -102,15 +102,15 @@ struct str_slice *split_string_alloc(const char *str,
                                      size_t *size);
 
 char *join_string_pre_p_alloc(const struct str_slice *list,
-                               size_t list_size,
-                               const char *prefix,
-                               const char *postfix);
+                              size_t list_size,
+                              const char *prefix,
+                              const char *postfix);
 char *join_string_pre_alloc(const struct str_slice *list,
                             size_t list_size,
                             const char *prefix);
 char *join_string_p_alloc(const struct str_slice *list,
-                           size_t list_size,
-                           const char *postfix);
+                          size_t list_size,
+                          const char *postfix);
 char *join_string_alloc(const struct str_slice *list, size_t list_size);
 
 char *remove_whitespace_n_alloc(const struct str_slice *src);
