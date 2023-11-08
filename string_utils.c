@@ -37,9 +37,9 @@ char *next_line(struct str_slice *line)
 
     line->begin += line->size + 1;
     end = strchr(line->begin, '\n');
-    line->size = end ? (size_t)(end - line->begin) : strlen(line->begin);
+    line->size = end ? (size_t)(end - line->begin) : 0;
 
-    return line->begin;
+    return end ? line->begin : NULL;
 }
 
 char *lstrip_string_n(struct str_slice *str)
