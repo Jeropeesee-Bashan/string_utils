@@ -7,31 +7,31 @@
 
 TEST correct_split(void)
 {
-    const char to_split[] = "one,two,three";
-    struct str_slice elements[3];
-    size_t actual_size;
+        const char to_split[] = "one,two,three";
+        struct str_slice elements[3];
+        size_t actual_size;
 
-    actual_size = split_string(to_split, ",", elements, 3);
+        actual_size = split_string(to_split, ",", elements, 3);
 
-    ASSERT_EQ(actual_size, 3);
-    ASSERT_EQ(elements[0].begin, to_split);
-    ASSERT_EQ(elements[0].size, 3);
-    ASSERT_EQ(elements[1].begin, to_split + 4);
-    ASSERT_EQ(elements[1].size, 3);
-    ASSERT_EQ(elements[2].begin, to_split + 8);
-    ASSERT_EQ(elements[2].size, 5);
-    PASS();
+        ASSERT_EQ(actual_size, 3);
+        ASSERT_EQ(elements[0].begin, to_split);
+        ASSERT_EQ(elements[0].size, 3);
+        ASSERT_EQ(elements[1].begin, to_split + 4);
+        ASSERT_EQ(elements[1].size, 3);
+        ASSERT_EQ(elements[2].begin, to_split + 8);
+        ASSERT_EQ(elements[2].size, 5);
+        PASS();
 }
 
 TEST correct_list_size_for_splitting_with_null_list(void)
 {
-    const char to_split[] = "This|is|a|long|line|we|are|going|to|split";
-    size_t actual_size;
+        const char to_split[] = "This|is|a|long|line|we|are|going|to|split";
+        size_t actual_size;
 
-    actual_size = split_string(to_split, "|", NULL, 0);
+        actual_size = split_string(to_split, "|", NULL, 0);
 
-    ASSERT_EQ(actual_size, 10);
-    PASS();
+        ASSERT_EQ(actual_size, 10);
+        PASS();
 }
 
 TEST correct_split_beginning_separator(void)
@@ -181,24 +181,24 @@ TEST correct_whitespace_only_split(void)
 
 TEST correct_string_slice_split(void)
 {
-    const char to_split[] = "junkjunkJuNkJU,  NK  ,  lol,  ol,  junkJUNKjuNK";
-    struct str_slice slice;
-    struct str_slice elements[3];
-    size_t actual_size;
+        const char to_split[] = "junkjunkJuNkJU,  NK  ,  lol,  ol,  junkJUNKjuNK";
+        struct str_slice slice;
+        struct str_slice elements[3];
+        size_t actual_size;
 
-    slice.begin = (char*)to_split + 21;
-    slice.size = 13;
+        slice.begin = (char*)to_split + 21;
+        slice.size = 13;
 
-    actual_size = split_string_n(&slice, ",  ", elements, 3);
+        actual_size = split_string_n(&slice, ",  ", elements, 3);
 
-    ASSERT_EQ(actual_size, 3);
-    ASSERT_EQ(elements[0].begin, to_split + 21);
-    ASSERT_EQ(elements[0].size, 0);
-    ASSERT_EQ(elements[1].begin, to_split + 24);
-    ASSERT_EQ(elements[1].size, 3);
-    ASSERT_EQ(elements[2].begin, to_split + 30);
-    ASSERT_EQ(elements[2].size, 4);
-    PASS();
+        ASSERT_EQ(actual_size, 3);
+        ASSERT_EQ(elements[0].begin, to_split + 21);
+        ASSERT_EQ(elements[0].size, 0);
+        ASSERT_EQ(elements[1].begin, to_split + 24);
+        ASSERT_EQ(elements[1].size, 3);
+        ASSERT_EQ(elements[2].begin, to_split + 30);
+        ASSERT_EQ(elements[2].size, 4);
+        PASS();
 }
 
 #endif /* SPLIT_STRING_H_ */
