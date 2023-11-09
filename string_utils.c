@@ -36,8 +36,12 @@ char *next_line(struct str_slice *line)
         return NULL;
 
     line->begin += line->size + 1;
+    if (!strncmp(line->begin - 1, "\r\n", 2))
+        line->begin += 1;
     end = strchr(line->begin, '\n');
     line->size = end ? (size_t)(end - line->begin) : 0;
+    if (line->size && line->begin[line->size - 1] == '\r')
+        line->size -= 1;
 
     return end ? line->begin : NULL;
 }
