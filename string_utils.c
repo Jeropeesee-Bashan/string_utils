@@ -46,6 +46,15 @@ char *next_line(struct str_slice *line)
     return end ? line->begin : NULL;
 }
 
+struct str_slice *copy_slice(struct str_slice *dst, const struct str_slice *src)
+{
+    if (dst == NULL || src == NULL)
+        return NULL;
+
+    return (struct str_slice *)memcpy((void*)dst, (const void*)src,
+                                      sizeof(struct str_slice));
+}
+
 char *lstrip_string_n(struct str_slice *str)
 {
     size_t delta;

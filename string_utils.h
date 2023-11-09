@@ -35,6 +35,9 @@ extern "C"
 
 char *next_line(struct str_slice *line);
 
+struct str_slice *copy_slice(struct str_slice *dst,
+                             const struct str_slice *src);
+
 char *lstrip_string_n(struct str_slice *str);
 char *lstrip_string(const char *str, size_t *size);
 size_t rstrip_string_n(const struct str_slice *str);
